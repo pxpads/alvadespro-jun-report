@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alvadespro — Instagram Performance Report | June 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy:#0D1B2A;--navy-mid:#1A2E45;--gold:#C9A84C;--gold-lt:#E8C97A;
+    --silver:#8D9BAD;--bg:#F4F6F9;--bg2:#EEF2F8;--white:#FFFFFF;
+    --red:#D94F4F;--green:#3DAA6E;--text:#1A1A2E;--muted:#4A5568;
+    --border:#DDE3EC;--sidebar:220px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+  #sidebar{width:var(--sidebar);background:var(--navy);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100}
+  .sidebar-logo{padding:28px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .sidebar-logo .brand{font-family:'Playfair Display',serif;font-size:15px;color:var(--gold);letter-spacing:0.5px;line-height:1.3}
+  .sidebar-logo .period{font-size:10px;color:var(--silver);margin-top:4px;font-weight:300}
+  .sidebar-logo .gold-bar{width:28px;height:2px;background:var(--gold);margin-bottom:10px}
+  nav{flex:1;padding:16px 0}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:12px 20px;cursor:pointer;color:var(--silver);font-size:12px;font-weight:500;letter-spacing:0.3px;transition:all 0.2s;border-left:3px solid transparent;text-transform:uppercase}
+  .nav-item:hover{color:var(--white);background:rgba(255,255,255,0.04)}
+  .nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,0.08)}
+  .nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+  .nav-num{font-size:9px;color:rgba(255,255,255,0.2);margin-left:auto}
+  .sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.08)}
+  .print-btn{width:100%;padding:9px 12px;background:var(--gold);color:var(--navy);border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;text-transform:uppercase}
+  .print-btn:hover{background:var(--gold-lt)}
+
+  #main{margin-left:var(--sidebar);flex:1;min-height:100vh}
+
+  .section{display:none;padding:0;min-height:100vh;animation:fadeIn 0.35s ease}
+  .section.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .page-header{background:var(--navy);padding:32px 40px 28px;position:relative;overflow:hidden}
+  .page-header::before{content:'';position:absolute;left:0;top:0;width:5px;height:100%;background:var(--gold)}
+  .page-header::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(201,168,76,0.08),transparent 70%);border-radius:50%}
+  .page-header .eyebrow{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+  .page-header h1{font-family:'Playfair Display',serif;font-size:26px;color:var(--white);font-weight:700;line-height:1.25}
+  .page-header .meta{margin-top:8px;font-size:11px;color:var(--silver);display:flex;gap:16px;flex-wrap:wrap}
+  .page-header .meta span{display:flex;align-items:center;gap:5px}
+
+  .content{padding:32px 40px}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .kpi-card{background:var(--white);border-radius:10px;padding:18px 16px 14px;border-top:3px solid var(--gold);box-shadow:0 1px 6px rgba(0,0,0,0.05)}
+  .kpi-card.highlight{border-top-color:var(--green)}
+  .kpi-label{font-size:10px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--silver);margin-bottom:8px}
+  .kpi-value{font-family:'Playfair Display',serif;font-size:28px;color:var(--navy);font-weight:700;line-height:1;margin-bottom:8px}
+  .kpi-change{font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
+  .kpi-change.up{color:var(--green)}
+  .kpi-change.down{color:var(--red)}
+  .kpi-change.neutral{color:var(--silver)}
+
+  .chart-card{background:var(--white);border-radius:10px;padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,0.05);margin-bottom:20px}
+  .chart-card h3{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px}
+  .chart-sub{font-size:11px;color:var(--silver);margin-bottom:18px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+
+  .insight-box{background:var(--bg2);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:14px 16px;margin-top:14px;font-size:12.5px;color:var(--navy-mid);line-height:1.65}
+  .insight-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+  .insight-box.green{border-left-color:var(--green)}
+  .insight-label.green{color:var(--green)}
+
+  .data-table{width:100%;border-collapse:collapse;font-size:12px}
+  .data-table thead tr{background:var(--navy);color:var(--white)}
+  .data-table thead th{padding:10px 12px;text-align:left;font-weight:600;font-size:10.5px;letter-spacing:0.3px;text-transform:uppercase}
+  .data-table tbody tr:nth-child(even){background:var(--bg)}
+  .data-table tbody tr:hover{background:var(--bg2)}
+  .data-table td{padding:9px 12px;color:var(--muted);border-bottom:1px solid var(--border)}
+  .data-table td strong{color:var(--navy)}
+
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700}
+  .badge-green{background:rgba(61,170,110,0.12);color:var(--green)}
+  .badge-red{background:rgba(217,79,79,0.10);color:var(--red)}
+  .badge-gold{background:rgba(201,168,76,0.12);color:#8a6e2a}
+  .badge-navy{background:rgba(13,27,42,0.08);color:var(--navy-mid)}
+
+  .rec-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+  .rec-item{display:flex;gap:14px;align-items:flex-start;background:var(--white);border-radius:8px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+  .rec-num{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);font-weight:700;line-height:1;flex-shrink:0;width:28px}
+  .rec-body h4{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px}
+  .rec-body p{font-size:12px;color:var(--muted);line-height:1.6}
+
+  .ach-list{display:flex;flex-direction:column;gap:10px}
+  .ach-item{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:8px;border-left:4px solid}
+  .ach-item.good{background:rgba(61,170,110,0.06);border-color:var(--green)}
+  .ach-item.bad{background:rgba(217,79,79,0.05);border-color:var(--red)}
+  .ach-item.gold{background:rgba(201,168,76,0.06);border-color:var(--gold)}
+  .ach-icon{font-size:18px;line-height:1;flex-shrink:0}
+  .ach-body h4{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px}
+  .ach-body p{font-size:12px;color:var(--muted);line-height:1.6}
+
+  .geo-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .geo-bar-label{font-size:12px;color:var(--navy);width:150px;flex-shrink:0}
+  .geo-bar-track{flex:1;background:var(--border);border-radius:4px;height:7px;overflow:hidden}
+  .geo-bar-fill{height:100%;border-radius:4px;background:var(--navy-mid)}
+  .geo-bar-pct{font-size:11px;color:var(--silver);width:36px;text-align:right;flex-shrink:0}
+  .geo-section h4{font-size:11px;font-weight:700;color:var(--silver);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+
+  .summary-stat{background:var(--navy);color:var(--white);border-radius:10px;padding:18px 20px;text-align:center}
+  .summary-stat .s-val{font-family:'Playfair Display',serif;font-size:30px;color:var(--gold);font-weight:700;display:block;line-height:1;margin-bottom:6px}
+  .summary-stat .s-label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--silver)}
+
+  .sec-divider{display:flex;align-items:center;gap:12px;margin:24px 0 16px}
+  .sec-divider h2{font-size:15px;font-weight:600;color:var(--navy);white-space:nowrap}
+  .sec-divider .line{flex:1;height:1px;background:var(--border)}
+  .sec-divider .dot{width:6px;height:6px;background:var(--gold);border-radius:50%;flex-shrink:0}
+
+  /* Win streak banner */
+  .win-banner{background:linear-gradient(135deg,var(--navy) 0%,#1A3A5C 100%);border-radius:10px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:20px;border:1px solid rgba(201,168,76,0.3)}
+  .win-banner .win-icon{font-size:32px;flex-shrink:0}
+  .win-banner h3{font-family:'Playfair Display',serif;font-size:16px;color:var(--gold);margin-bottom:4px}
+  .win-banner p{font-size:12px;color:var(--silver);line-height:1.6}
+
+  @media print{
+    #sidebar{display:none}
+    #main{margin-left:0}
+    .section{display:block!important;page-break-after:always}
+    body{background:white}
+    .page-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="gold-bar"></div>
+    <div class="brand">@alvadespro<br>Performance Report</div>
+    <div class="period">June 2026</div>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="showSection('s1',this)"><span class="icon">📊</span>Account Summary<span class="nav-num">01</span></div>
+    <div class="nav-item" onclick="showSection('s2',this)"><span class="icon">🌿</span>Organic Report<span class="nav-num">02</span></div>
+    <div class="nav-item" onclick="showSection('s3',this)"><span class="icon">👥</span>Demography<span class="nav-num">03</span></div>
+    <div class="nav-item" onclick="showSection('s4',this)"><span class="icon">📢</span>Ads Report<span class="nav-num">04</span></div>
+    <div class="nav-item" onclick="showSection('s5',this)"><span class="icon">⭐</span>Executive Summary<span class="nav-num">05</span></div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="print-btn" onclick="window.print()">🖨 Print / Export PDF</button>
+  </div>
+</aside>
+
+<main id="main">
+
+<!-- ══ PAGE 1 — ACCOUNT SUMMARY ══ -->
+<section id="s1" class="section active">
+  <div class="page-header">
+    <div class="eyebrow">Section 01 · Account Summary</div>
+    <h1>Alvadespro — June 2026 Overview</h1>
+    <div class="meta">
+      <span>📅 June 3 – 30, 2026</span>
+      <span>📍 Instagram Business Account</span>
+      <span>🔖 @alvadespro</span>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- Big win banner -->
+    <div class="win-banner">
+      <div class="win-icon">🚀</div>
+      <div>
+        <h3>Biggest Organic Month Yet — Views Up 114.7%</h3>
+        <p>After two months of falling organic numbers, June made a strong comeback. Views more than doubled, reach grew by 94.5%, and content interactions jumped 107.1%. This is the best organic performance since the account started tracking.</p>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Total Followers</div>
+        <div class="kpi-value">945</div>
+        <div class="kpi-change up">▲ +3 vs May (942)</div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Total Views</div>
+        <div class="kpi-value">2.1K</div>
+        <div class="kpi-change up">▲ +114.7% vs last month</div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Organic Reach</div>
+        <div class="kpi-value">1.1K</div>
+        <div class="kpi-change up">▲ +94.5% vs last month</div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Content Interactions</div>
+        <div class="kpi-value">29</div>
+        <div class="kpi-change up">▲ +107.1% vs last month</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">New Follows</div>
+        <div class="kpi-value">6</div>
+        <div class="kpi-change up">▲ +50% vs May (4)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Unfollows</div>
+        <div class="kpi-value">2</div>
+        <div class="kpi-change neutral">net +4 followers</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Conversations Started</div>
+        <div class="kpi-value">1</div>
+        <div class="kpi-change neutral">first DM contact</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Ads Total Reach</div>
+        <div class="kpi-value">8.1K</div>
+        <div class="kpi-change down">▼ vs 10.9K in May</div>
+      </div>
+    </div>
+
+    <!-- MoM comparison -->
+    <div class="chart-card">
+      <h3>3-Month Trend Comparison — April, May & June 2026</h3>
+      <div class="chart-sub">Key organic metrics tracked over three months</div>
+      <div style="height:200px"><canvas id="trendChart"></canvas></div>
+      <div class="insight-box green">
+        <div class="insight-label green">Key Insight</div>
+        June is a <strong>clear turning point</strong>. After two months of declining organic metrics, every major number went up —
+        views +114.7%, reach +94.5%, and interactions +107.1%. The content strategy shift (more questions in captions,
+        stronger early-month posting) is starting to pay off. The account is gaining real momentum.
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="chart-card" style="margin-bottom:0">
+        <h3>April vs May vs June — Views</h3>
+        <div class="chart-sub">Monthly organic view totals</div>
+        <div style="height:160px"><canvas id="viewsMomChart"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0">
+        <h3>Reach: From Followers vs Non-Followers</h3>
+        <div class="chart-sub">Where June reach came from</div>
+        <div style="height:160px"><canvas id="reachSourceChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PAGE 2 — ORGANIC ══ -->
+<section id="s2" class="section">
+  <div class="page-header">
+    <div class="eyebrow">Section 02 · Organic Report</div>
+    <h1>Organic Content Performance</h1>
+    <div class="meta"><span>📅 June 3 – 30, 2026</span><span>📝 12 Posts Published</span></div>
+  </div>
+  <div class="content">
+
+    <div class="kpi-grid">
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Total Posts</div>
+        <div class="kpi-value">12</div>
+        <div class="kpi-change neutral">8 Reels · 4 Carousels</div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Total Views</div>
+        <div class="kpi-value">1,267</div>
+        <div class="kpi-change up">▲ vs 643 in May (+97%)</div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Total Reach</div>
+        <div class="kpi-value">1,049</div>
+        <div class="kpi-change up">▲ vs 522 in May (+101%)</div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Engagement Rate</div>
+        <div class="kpi-value">1.6%</div>
+        <div class="kpi-change neutral">14 likes · 2 saves · 0 comments</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="chart-card" style="margin-bottom:0">
+        <h3>Content Type Split</h3>
+        <div class="chart-sub">Same as May: 8 Reels, 4 Carousels</div>
+        <div style="height:160px"><canvas id="contentTypeChart"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0">
+        <h3>Engagement Breakdown — June</h3>
+        <div class="chart-sub">Best likes and saves month yet</div>
+        <div style="height:160px"><canvas id="engagementChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Engagement 3-month trend -->
+    <div class="chart-card">
+      <h3>Engagement Breakdown — 3-Month Comparison</h3>
+      <div class="chart-sub">Likes, comments, shares, and saves across April, May, and June</div>
+      <div style="height:160px"><canvas id="engMomChart"></canvas></div>
+      <div class="insight-box">
+        <div class="insight-label">Key Insight</div>
+        Likes doubled from 7 in both April and May to <strong>14 in June</strong>. Saves reached 2 — the highest so far.
+        However, <strong>comments are still zero</strong> for the third month in a row.
+        The account is gaining traction but the community side is still silent. This must be fixed in July.
+      </div>
+    </div>
+
+    <div class="sec-divider">
+      <div class="dot"></div>
+      <h2>Top 5 Posts by Views</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="chart-card">
+      <table class="data-table">
+        <thead>
+          <tr><th>#</th><th>Type</th><th>Date</th><th>Post Description</th><th>Views</th><th>Reach</th><th>Likes</th><th>Saves</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1</strong></td>
+            <td><span class="badge badge-navy">IG Reel</span></td>
+            <td>Jun 13</td>
+            <td>A kitchen should feel intuitive before it feels impressive. What is the most frustrating thing…</td>
+            <td><strong>207</strong></td><td>178</td><td>2</td><td>1</td>
+          </tr>
+          <tr>
+            <td><strong>2</strong></td>
+            <td><span class="badge badge-navy">IG Reel</span></td>
+            <td>Jun 19</td>
+            <td>A well-designed bathroom feels calm before you even use it. Which bathroom detail matters most…</td>
+            <td><strong>175</strong></td><td>154</td><td>2</td><td>0</td>
+          </tr>
+          <tr>
+            <td><strong>3</strong></td>
+            <td><span class="badge badge-navy">IG Reel</span></td>
+            <td>Jun 7</td>
+            <td>Designed around daily routines, not decoration. Every material was chosen to age well…</td>
+            <td><strong>171</strong></td><td>153</td><td>1</td><td>0</td>
+          </tr>
+          <tr>
+            <td><strong>4</strong></td>
+            <td><span class="badge badge-navy">IG Reel</span></td>
+            <td>Jun 15</td>
+            <td>Good architecture belongs to its surroundings. What is the first thing you notice when looking…</td>
+            <td><strong>159</strong></td><td>130</td><td>2</td><td>1</td>
+          </tr>
+          <tr>
+            <td><strong>5</strong></td>
+            <td><span class="badge badge-navy">IG Reel</span></td>
+            <td>Jun 30</td>
+            <td>Every successful cafe has a feeling people remember. What makes you want to stay longer…</td>
+            <td><strong>138</strong></td><td>116</td><td>1</td><td>0</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="insight-box" style="margin-top:14px">
+        <div class="insight-label">Key Insight</div>
+        <strong>Questions in captions are working.</strong> Notice that four of the top five posts end with a direct question to the audience.
+        Even though comments are still zero, views and reach on these posts are much higher than in past months.
+        The algorithm is rewarding content that feels like a conversation starter.
+        Keep this pattern — and add Stories polls to turn viewers into commenters.
+      </div>
+    </div>
+
+    <div class="sec-divider">
+      <div class="dot"></div>
+      <h2>Content Recommendations</h2>
+      <div class="line"></div>
+    </div>
+    <div class="rec-list">
+      <div class="rec-item">
+        <div class="rec-num">01</div>
+        <div class="rec-body">
+          <h4>Keep the Question-in-Caption Format — It Is Working</h4>
+          <p>Views nearly doubled this month after adding questions to captions. Do not stop. Make every caption end with one simple question that is easy for anyone to answer.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">02</div>
+        <div class="rec-body">
+          <h4>Add Instagram Stories Polls to Get First Comments</h4>
+          <p>Zero comments for three months means people need a lower barrier to respond. Stories polls and sliders are one tap — no typing needed. Use them to warm up the audience before posting a Reel.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">03</div>
+        <div class="rec-body">
+          <h4>Post More Carousels with "Save-Worthy" Content</h4>
+          <p>Saves went up to 2 this month, with one Carousel earning a save. Create Carousels that teach something useful — like "5 Ways to Make a Small Room Feel Bigger." These get saved and shared more.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PAGE 3 — DEMOGRAPHY ══ -->
+<section id="s3" class="section">
+  <div class="page-header">
+    <div class="eyebrow">Section 03 · Demography Report</div>
+    <h1>Audience Demographics</h1>
+    <div class="meta"><span>📅 June 2026</span><span>👥 945 Followers</span></div>
+  </div>
+  <div class="content">
+
+    <div class="two-col">
+      <div class="chart-card" style="margin-bottom:0">
+        <h3>Audience Gender Split</h3>
+        <div class="chart-sub">Women vs Men — stable for 3 months</div>
+        <div style="height:180px"><canvas id="genderChart"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0">
+        <h3>Age & Gender Distribution</h3>
+        <div class="chart-sub">25–34 remains the dominant group</div>
+        <div style="height:180px"><canvas id="ageChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 3-month US audience trend -->
+    <div class="chart-card" style="margin-top:4px">
+      <h3>US Audience Growth — 3-Month Trend</h3>
+      <div class="chart-sub">United States followers as % of total audience — growing steadily alongside US ad targeting</div>
+      <div style="height:130px"><canvas id="usTrendChart"></canvas></div>
+      <div class="insight-box green">
+        <div class="insight-label green">Key Insight</div>
+        The US audience has grown from <strong>3.2% → 3.4% → 3.5%</strong> over three months.
+        This is a direct result of targeting ads at US users. Each month brings a small but consistent increase.
+        This is exactly what the strategy is designed to do.
+      </div>
+    </div>
+
+    <div class="sec-divider">
+      <div class="dot"></div>
+      <h2>Top Locations</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="two-col">
+      <div class="chart-card" style="margin-bottom:0">
+        <div class="geo-section">
+          <h4>Top Cities</h4>
+          <div class="geo-bar-row"><div class="geo-bar-label">Jakarta</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:88%"></div></div><div class="geo-bar-pct">4.4%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Surabaya</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:44%"></div></div><div class="geo-bar-pct">2.2%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Dau, East Java</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:12%"></div></div><div class="geo-bar-pct">0.6%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Badung, Bali</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:12%"></div></div><div class="geo-bar-pct">0.6%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Semarang</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:10%"></div></div><div class="geo-bar-pct">0.5%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Malang</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:10%"></div></div><div class="geo-bar-pct">0.5%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Depok</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:8%"></div></div><div class="geo-bar-pct">0.4%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Singosari</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:8%"></div></div><div class="geo-bar-pct">0.4%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Bekasi</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:8%"></div></div><div class="geo-bar-pct">0.4%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Batam</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:8%"></div></div><div class="geo-bar-pct">0.4%</div></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0">
+        <div class="geo-section">
+          <h4>Top Countries</h4>
+          <div class="geo-bar-row"><div class="geo-bar-label">Indonesia</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:100%;background:var(--gold)"></div></div><div class="geo-bar-pct">32.2%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">🇺🇸 United States</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:10.8%;background:var(--green)"></div></div><div class="geo-bar-pct">3.5%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Canada</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:2.5%"></div></div><div class="geo-bar-pct">0.8%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Australia</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:2.2%"></div></div><div class="geo-bar-pct">0.7%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Malaysia</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:1.2%"></div></div><div class="geo-bar-pct">0.4%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">UAE</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:0.9%"></div></div><div class="geo-bar-pct">0.3%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">India</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:0.9%"></div></div><div class="geo-bar-pct">0.3%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Egypt</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:0.9%"></div></div><div class="geo-bar-pct">0.3%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">Singapore</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:0.6%"></div></div><div class="geo-bar-pct">0.2%</div></div>
+          <div class="geo-bar-row"><div class="geo-bar-label">United Kingdom</div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:0.6%"></div></div><div class="geo-bar-pct">0.2%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-divider" style="margin-top:20px">
+      <div class="dot"></div>
+      <h2>Audience Insights</h2>
+      <div class="line"></div>
+    </div>
+    <div class="ach-list">
+      <div class="ach-item good">
+        <div class="ach-icon">✅</div>
+        <div class="ach-body">
+          <h4>Core Audience Stays Consistent — 25–34, Majority Women</h4>
+          <p>For the third month in a row, the 25–34 age group leads with ~55% of the audience. Women hold steady at 57.3%. This consistency means the content and ads are attracting the same type of high-quality audience every month — which is a good sign for brand building.</p>
+        </div>
+      </div>
+      <div class="ach-item good">
+        <div class="ach-icon">🇺🇸</div>
+        <div class="ach-body">
+          <h4>US Audience Keeps Growing — Now at 3.5%</h4>
+          <p>The US audience has grown every single month: 3.2% in April → 3.4% in May → 3.5% in June. This is a clear sign that the US ad targeting is working. Over time, this audience will become a meaningful part of the follower base.</p>
+        </div>
+      </div>
+      <div class="ach-item gold">
+        <div class="ach-icon">🌏</div>
+        <div class="ach-body">
+          <h4>Egypt Enters the Top Countries List</h4>
+          <p>Egypt (0.3%) appeared in the top countries list for the first time this month, replacing Spain. The account is slowly reaching a wider international audience. This could be worth monitoring — Egyptian followers interested in premium design may have strong referral potential.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PAGE 4 — ADS REPORT ══ -->
+<section id="s4" class="section">
+  <div class="page-header">
+    <div class="eyebrow">Section 04 · Ads Report</div>
+    <h1>Meta Ads Performance</h1>
+    <div class="meta">
+      <span>📅 June 1 – 30, 2026</span>
+      <span>💰 Total Spent: Rp 2,999,883</span>
+      <span>📢 2 Active Ads</span>
+    </div>
+  </div>
+  <div class="content">
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Spend</div>
+        <div class="kpi-value" style="font-size:20px">Rp 3.0M</div>
+        <div class="kpi-change up">▲ Rp 106K less than May</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Impressions</div>
+        <div class="kpi-value">14.5K</div>
+        <div class="kpi-change down">▼ vs 17.3K in May</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Reach</div>
+        <div class="kpi-value">8.1K</div>
+        <div class="kpi-change down">▼ vs 10.9K in May</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Link Clicks</div>
+        <div class="kpi-value">612</div>
+        <div class="kpi-change down">▼ vs 735 in May</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Ad-by-Ad Breakdown — June 2026</h3>
+      <div class="chart-sub">Full performance data for each active ad</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Metric</th><th>Ad 1 — Tired of AI Design</th><th>Ad 2 — AI Can't Give You Luxury</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Amount Spent</td><td>Rp 1,503,402</td><td>Rp 1,496,481</td></tr>
+          <tr><td>Impressions</td><td><strong>5,729</strong></td><td><strong>8,794</strong></td></tr>
+          <tr><td>Reach</td><td>3,349</td><td>4,713</td></tr>
+          <tr><td>Link Clicks</td><td><strong>369</strong></td><td><strong>243</strong></td></tr>
+          <tr><td>CTR</td>
+            <td><strong style="color:var(--green)">6.44%</strong> <span class="badge badge-red" style="font-size:9px">▼ was 7.47%</span></td>
+            <td><strong style="color:var(--green)">2.76%</strong> <span class="badge badge-green" style="font-size:9px">▲ was 2.34%</span></td>
+          </tr>
+          <tr><td>CPM</td><td>Rp 262,420</td><td>Rp 170,171</td></tr>
+          <tr><td>CPC</td><td>Rp 4,074</td><td>Rp 6,158</td></tr>
+          <tr><td>Interactions</td><td>3</td><td>20</td></tr>
+          <tr><td>Frequency</td><td>1.71x</td><td>1.87x</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3-month CTR trend -->
+    <div class="two-col">
+      <div class="chart-card" style="margin-bottom:0">
+        <h3>CTR — 3-Month Trend vs Benchmark</h3>
+        <div class="chart-sub">Both ads vs US industry benchmark of 0.90%</div>
+        <div style="height:170px"><canvas id="ctrTrendChart"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0">
+        <h3>Total Link Clicks — April to June</h3>
+        <div class="chart-sub">Monthly click totals for both ads combined</div>
+        <div style="height:170px"><canvas id="clicksTrendChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec-divider" style="margin-top:4px">
+      <div class="dot"></div>
+      <h2>Benchmark vs US Market — Interior & Exterior Niche</h2>
+      <div class="line"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-sub" style="margin-bottom:12px">
+        Benchmarks based on Meta Ads data for interior & exterior design in the <strong>United States</strong> (Q1–Q2 2026)
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Metric</th><th>Apr 2026</th><th>May 2026</th><th>Jun 2026</th><th>US Benchmark</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>CTR (Average)</td>
+            <td>4.45%</td><td>4.91%</td>
+            <td><strong>4.60%</strong></td>
+            <td>0.90% <span style="color:var(--silver);font-size:10px">(US avg)</span></td>
+            <td><span class="badge badge-green">▲ Above Benchmark</span></td>
+          </tr>
+          <tr>
+            <td>CPM (Average)</td>
+            <td>$12.04</td><td>$11.80</td>
+            <td><strong>$13.60 (~Rp 222K)</strong></td>
+            <td>$15.00 <span style="color:var(--silver);font-size:10px">(US avg)</span></td>
+            <td><span class="badge badge-green">▲ Above Benchmark</span></td>
+          </tr>
+          <tr>
+            <td>CPC (Average)</td>
+            <td>$0.29</td><td>$0.26</td>
+            <td><strong>$0.32 (~Rp 4,903)</strong></td>
+            <td>$1.50 <span style="color:var(--silver);font-size:10px">(US avg)</span></td>
+            <td><span class="badge badge-green">▲ Above Benchmark</span></td>
+          </tr>
+          <tr>
+            <td>Ad Frequency</td>
+            <td>1.41x</td><td>1.59x</td>
+            <td><strong>1.79x</strong></td>
+            <td>&lt; 3.0x <span style="color:var(--silver);font-size:10px">(US avg)</span></td>
+            <td><span class="badge badge-green">✓ Good Range</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="insight-box">
+        <div class="insight-label">Key Insight</div>
+        All four metrics are <strong>still above the US benchmark</strong> — for the third month in a row. However, June shows
+        some small signs of ad fatigue: Ad 1's CTR slipped from 7.47% to 6.44%, reach dropped, and total clicks fell from 735 to 612.
+        The ads are aging. <strong>New creative is needed soon</strong> — especially for Ad 1, which has been running since April.
+        A fresh visual with the same strong message could bring CTR back above 7%.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PAGE 5 — EXECUTIVE SUMMARY ══ -->
+<section id="s5" class="section">
+  <div class="page-header">
+    <div class="eyebrow">Section 05 · Executive Summary</div>
+    <h1>Key Findings & Next Steps</h1>
+    <div class="meta"><span>📅 June 2026 Report</span><span>👤 Prepared by Digital Strategy Team</span></div>
+  </div>
+  <div class="content">
+
+    <div class="three-col" style="margin-bottom:24px">
+      <div class="summary-stat">
+        <span class="s-val">+114.7%</span>
+        <div class="s-label">Organic Views — best month ever</div>
+      </div>
+      <div class="summary-stat">
+        <span class="s-val">3× over</span>
+        <div class="s-label">US benchmark CTR — for 3 months straight</div>
+      </div>
+      <div class="summary-stat">
+        <span class="s-val">3.5%</span>
+        <div class="s-label">US audience share — up every single month</div>
+      </div>
+    </div>
+
+    <div class="sec-divider">
+      <div class="dot"></div>
+      <h2>What Went Well</h2>
+      <div class="line"></div>
+    </div>
+    <div class="ach-list" style="margin-bottom:24px">
+      <div class="ach-item good">
+        <div class="ach-icon">🚀</div>
+        <div class="ach-body">
+          <h4>Organic is Back — Views More Than Doubled</h4>
+          <p>After two months of falling numbers, June brought a strong recovery. Views went from 1,100 to 2,100 (+114.7%). Reach jumped from 564 to 1,100 (+94.5%). Adding questions to captions and posting strong content early in the month both contributed to this turnaround.</p>
+        </div>
+      </div>
+      <div class="ach-item good">
+        <div class="ach-icon">💬</div>
+        <div class="ach-body">
+          <h4>First DM Conversation — A New Signal</h4>
+          <p>One conversation was started this month. This is small but important. It means someone was interested enough to reach out directly. As organic content improves, this number should grow into real leads.</p>
+        </div>
+      </div>
+      <div class="ach-item good">
+        <div class="ach-icon">💰</div>
+        <div class="ach-body">
+          <h4>Ads Stay Efficient — All Benchmarks Still Beat</h4>
+          <p>For the third month in a row, CTR (4.60%), CPM ($13.60), and CPC ($0.32) all beat the US industry benchmark. The ads cost far less per click than the typical US home design ad.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-divider">
+      <div class="dot"></div>
+      <h2>What Needs to Improve</h2>
+      <div class="line"></div>
+    </div>
+    <div class="ach-list" style="margin-bottom:24px">
+      <div class="ach-item bad">
+        <div class="ach-icon">⚠️</div>
+        <div class="ach-body">
+          <h4>Ad 1 CTR Dropped — Creative Fatigue is Setting In</h4>
+          <p>Ad 1 CTR fell from 7.47% (May) to 6.44% (June). Total ad reach dropped from 10.9K to 8.1K and link clicks fell from 735 to 612. After 3 months of running the same ads, the audience has seen them before. New creative is urgent.</p>
+        </div>
+      </div>
+      <div class="ach-item bad">
+        <div class="ach-icon">💬</div>
+        <div class="ach-body">
+          <h4>Zero Comments — Three Months in a Row</h4>
+          <p>Despite views doubling, not one comment was left on any post in June. Views and reach are growing but the audience is still not talking. Stories polls and a reply-worthy question format need to be tested in July.</p>
+        </div>
+      </div>
+      <div class="ach-item bad">
+        <div class="ach-icon">🔗</div>
+        <div class="ach-body">
+          <h4>Zero Conversions from Ads — No Orders Created</h4>
+          <p>The dashboard shows 0 orders created. Hundreds of people are clicking the ads but no one is buying or reaching out. The landing page or bio link experience after the click needs to be reviewed and improved.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-divider">
+      <div class="dot"></div>
+      <h2>5 Priority Actions for July 2026</h2>
+      <div class="line"></div>
+    </div>
+    <div class="rec-list">
+      <div class="rec-item">
+        <div class="rec-num">01</div>
+        <div class="rec-body">
+          <h4>Launch New Ad Creative — The Current Ads Are Aging</h4>
+          <p>Ad 1 has been running since April — three months on the same creative. Create at least one new video ad with a fresh visual angle and the same strong message about luxury design vs AI. Test it against the current ads in July.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">02</div>
+        <div class="rec-body">
+          <h4>Fix the Post-Click Experience — Why Are People Not Converting?</h4>
+          <p>Over 600 people clicked the ads in June and zero became leads or orders. Check the bio link, landing page, or WhatsApp flow after the click. Make the next step simple and clear: one button, one action, one offer.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">03</div>
+        <div class="rec-body">
+          <h4>Add Stories Polls Every Week to Break the Zero-Comment Pattern</h4>
+          <p>Polls are a one-tap interaction. Run a simple poll every week like "Warm tones or cool tones?" This trains the audience to engage with the account and warms them up to comment on posts.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">04</div>
+        <div class="rec-body">
+          <h4>Keep the Question-in-Caption Format — It Doubled Views</h4>
+          <p>Views went from 643 to 1,267 in one month after adding questions to captions. This format must stay in every post. Keep the question short, specific, and easy to answer.</p>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">05</div>
+        <div class="rec-body">
+          <h4>Create One "Saveable" Carousel Per Week</h4>
+          <p>Saves are up (2 this month). Create at least one Carousel per week with a list format like "5 Signs Your Home Needs a Design Update" or "3 Things Every Luxury Kitchen Has." These get saved and shared more than any other format.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="insight-box green" style="margin-top:24px">
+      <div class="insight-label green">Final Note</div>
+      June 2026 is a <strong>breakthrough month</strong> for organic content — the biggest growth since the account was active.
+      The paid ads are still highly efficient but showing early signs of fatigue.
+      July's job is clear: <strong>refresh the ads, fix the post-click funnel, and turn viewers into commenters.</strong>
+      If those three things happen, the account is set up for its strongest quarter yet.
+    </div>
+
+    <div style="margin-top:24px;text-align:center;font-size:11px;color:var(--silver);padding:16px 0;border-top:1px solid var(--border)">
+      Prepared by Digital Strategy Team &nbsp;·&nbsp; Confidential &nbsp;·&nbsp;
+      Data source: Meta Business Suite & Instagram Insights — June 2026
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+function showSection(id,navEl){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  navEl.classList.add('active');
+}
+
+Chart.defaults.font.family="'DM Sans',sans-serif";
+Chart.defaults.font.size=11;
+Chart.defaults.color='#8D9BAD';
+Chart.defaults.plugins.legend.labels.boxWidth=10;
+Chart.defaults.plugins.legend.labels.padding=14;
+
+const NAVY='#1A2E45',GOLD='#C9A84C',SILVER='#8D9BAD',GREEN='#3DAA6E',RED='#D94F4F',BORDER='#DDE3EC',LIGHT='#7BB8D4';
+
+// ── Page 1 ──
+new Chart(document.getElementById('trendChart'),{
+  type:'line',
+  data:{
+    labels:['April','May','June'],
+    datasets:[
+      {label:'Views',data:[1500,1100,2100],borderColor:GOLD,backgroundColor:'rgba(201,168,76,0.08)',borderWidth:2,pointRadius:5,pointBackgroundColor:GOLD,fill:true,tension:0.3},
+      {label:'Reach',data:[782,564,1100],borderColor:LIGHT,backgroundColor:'rgba(123,184,212,0.06)',borderWidth:2,pointRadius:5,pointBackgroundColor:LIGHT,fill:true,tension:0.3},
+      {label:'Interactions',data:[15,15,29],borderColor:GREEN,backgroundColor:'rgba(61,170,110,0.06)',borderWidth:2,pointRadius:5,pointBackgroundColor:GREEN,fill:false,tension:0.3}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom'}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:BORDER},beginAtZero:true}}}
+});
+
+new Chart(document.getElementById('viewsMomChart'),{
+  type:'bar',
+  data:{
+    labels:['April','May','June'],
+    datasets:[{data:[1500,1100,2100],backgroundColor:[SILVER,SILVER,GREEN],borderRadius:6,borderWidth:0}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:BORDER},beginAtZero:true}}}
+});
+
+new Chart(document.getElementById('reachSourceChart'),{
+  type:'doughnut',
+  data:{
+    labels:['From Non-Followers (974)','From Followers (77)'],
+    datasets:[{data:[974,77],backgroundColor:[NAVY,GOLD],borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},cutout:'55%'}
+});
+
+// ── Page 2 ──
+new Chart(document.getElementById('contentTypeChart'),{
+  type:'doughnut',
+  data:{
+    labels:['IG Reel (67%)','IG Carousel (33%)'],
+    datasets:[{data:[8,4],backgroundColor:[NAVY,GOLD],borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},cutout:'55%'}
+});
+
+new Chart(document.getElementById('engagementChart'),{
+  type:'bar',
+  data:{
+    labels:['Likes','Comments','Shares','Saves'],
+    datasets:[{data:[14,0,1,2],backgroundColor:[GOLD,SILVER,NAVY,GREEN],borderRadius:5,borderWidth:0}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:BORDER},beginAtZero:true,ticks:{stepSize:2}}}}
+});
+
+new Chart(document.getElementById('engMomChart'),{
+  type:'bar',
+  data:{
+    labels:['April','May','June'],
+    datasets:[
+      {label:'Likes',data:[7,7,14],backgroundColor:GOLD,borderRadius:4,borderWidth:0},
+      {label:'Comments',data:[0,1,0],backgroundColor:SILVER,borderRadius:4,borderWidth:0},
+      {label:'Shares',data:[1,1,1],backgroundColor:NAVY,borderRadius:4,borderWidth:0},
+      {label:'Saves',data:[1,2,2],backgroundColor:GREEN,borderRadius:4,borderWidth:0}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:BORDER},beginAtZero:true,ticks:{stepSize:2}}}}
+});
+
+// ── Page 3 ──
+new Chart(document.getElementById('genderChart'),{
+  type:'doughnut',
+  data:{
+    labels:['Women (57.3%)','Men (42.7%)'],
+    datasets:[{data:[57.3,42.7],backgroundColor:[LIGHT,NAVY],borderWidth:2,borderColor:'#fff'}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},cutout:'55%'}
+});
+
+new Chart(document.getElementById('ageChart'),{
+  type:'bar',
+  data:{
+    labels:['18–24','25–34','35–44','45–54','55–64','65+'],
+    datasets:[
+      {label:'Women',data:[2.5,33,18.5,3,1.5,1],backgroundColor:LIGHT,borderRadius:3,borderWidth:0},
+      {label:'Men',data:[3.5,21,10.5,7,3.5,1],backgroundColor:NAVY,borderRadius:3,borderWidth:0}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:BORDER},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+});
+
+new Chart(document.getElementById('usTrendChart'),{
+  type:'line',
+  data:{
+    labels:['April 2026','May 2026','June 2026'],
+    datasets:[{
+      label:'US Audience %',
+      data:[3.2,3.4,3.5],
+      borderColor:GREEN,backgroundColor:'rgba(61,170,110,0.1)',
+      borderWidth:2.5,pointRadius:6,pointBackgroundColor:GREEN,fill:true,tension:0.3
+    }]
+  },
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y}%`}}},
+    scales:{x:{grid:{display:false}},
+      y:{grid:{color:BORDER},min:3.0,max:4.0,ticks:{callback:v=>v+'%'}}}}
+});
+
+// ── Page 4 ──
+new Chart(document.getElementById('ctrTrendChart'),{
+  type:'line',
+  data:{
+    labels:['April','May','June'],
+    datasets:[
+      {label:'Ad 1 CTR',data:[6.68,7.47,6.44],borderColor:GREEN,borderWidth:2,pointRadius:5,pointBackgroundColor:GREEN,tension:0.3},
+      {label:'Ad 2 CTR',data:[2.21,2.34,2.76],borderColor:GOLD,borderWidth:2,pointRadius:5,pointBackgroundColor:GOLD,tension:0.3},
+      {label:'US Benchmark',data:[0.9,0.9,0.9],borderColor:SILVER,borderWidth:1.5,borderDash:[5,5],pointRadius:0,tension:0}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},
+    tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y}%`}}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:BORDER},beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+});
+
+new Chart(document.getElementById('clicksTrendChart'),{
+  type:'bar',
+  data:{
+    labels:['April','May','June'],
+    datasets:[
+      {label:'Ad 1 Clicks',data:[414,481,369],backgroundColor:NAVY,borderRadius:4,borderWidth:0},
+      {label:'Ad 2 Clicks',data:[220,254,243],backgroundColor:GOLD,borderRadius:4,borderWidth:0}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:BORDER},beginAtZero:true},stacked:false}}
+});
+</script>
+</body>
+</html>
